@@ -1,20 +1,36 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Message } from './schemas/msg.schema';
+import { FileMetaDto, Message } from './schemas/msg.schema';
 
 @Injectable()
 export class AppService {
   constructor(@InjectModel('Message') private msgModel: Model<Message>) {}
-  getHello(): string {
-    console.log('hitting service');
 
-    return 'Hello World!';
+  private sanitizeFiles(files?: FileMetaDto[]) {
+    if (!files?.length) return files;
+
+    return files.map((file) => ({
+      fileName: file.fileName,
+      fileType: file.fileType,
+      fileId: file.fileId,
+      objectKey: file.objectKey,
+    }));
   }
+
+  private sanitizeMessage(msgData: Partial<Message>): Partial<Message> {
+    return {
+      ...msgData,
+      files: this.sanitizeFiles(msgData.files),
+    };
+  }
+
   async saveMsg(msgData: Partial<Message>): Promise<any> {
-    return new Promise(async (resolve, reject) => {
+    const payload = this.sanitizeMessage(msgData);
+
+    return new Promise(async (resolve) => {
       try {
-        await new this.msgModel({ isNew: true, ...msgData })
+        await new this.msgModel({ isNew: true, ...payload })
           .save()
           .then((res) => {
             resolve({
@@ -32,9 +48,7 @@ export class AppService {
   }
 
   async fetchMsg(msgData: any): Promise<any> {
-    console.log('hitting fetchMsg service', msgData);
-
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
       try {
         await this.msgModel
           .find({
@@ -55,27 +69,26 @@ export class AppService {
     });
   }
 
-  //updating a msg
-  async update(msdData:Partial<Message>):Promise<any>{
-    const {id,...remaining} = msdData;
-    console.log(remaining);
-    
-    return new Promise(async (resolve,reject) =>{
+  async update(msdData: Partial<Message>): Promise<any> {
+    const { id, ...remaining } = msdData;
+    const payload = this.sanitizeMessage(remaining);
+
+    return new Promise(async (resolve) => {
       try {
-        await this.msgModel.findOneAndUpdate({id:id},remaining).then((res) =>{
-          console.log("res :",res);
-          
-          resolve({
-            success:true,
-            msgId:res!.id
+        await this.msgModel
+          .findOneAndUpdate({ id: id }, payload)
+          .then((res) => {
+            resolve({
+              success: true,
+              msgId: res!.id,
+            });
           })
-        }).catch((error) =>{
-          resolve({success:false,error:error})
-        })
-        
+          .catch((error) => {
+            resolve({ success: false, error: error });
+          });
       } catch (error) {
-          resolve({success:false,error:error})
+        resolve({ success: false, error: error });
       }
-    })
+    });
   }
 }

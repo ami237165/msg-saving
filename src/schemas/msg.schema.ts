@@ -1,19 +1,17 @@
 import { Schema, Document } from 'mongoose';
 
 export const FileMetaSchema = new Schema({
-  filename: { type: String },
+  fileName: { type: String },
   fileType: { type: String },
   fileId: { type: String },
-  previewUrl: { type: String },
-  fileData: { type: Schema.Types.Mixed },
+  objectKey: { type: String },
 });
 
 export class FileMetaDto {
-  filename: string;
+  fileName: string;
   fileType: string;
   fileId: string;
-  previewUrl: string;
-  fileData: any;
+  objectKey?: string;
 }
 
 export interface Message extends Document {
@@ -34,7 +32,7 @@ export interface Message extends Document {
 
 export const MessageSchema = new Schema({
   text: String,
-  files: [FileMetaSchema], // <-- FIXED: Array of embedded subdocuments
+  files: [FileMetaSchema],
   hasText: Boolean,
   hasFiles: Boolean,
   sender: String,
@@ -45,4 +43,5 @@ export const MessageSchema = new Schema({
   isUploading: Boolean,
   isRead: Boolean,
   isSent: Boolean,
+  delivered: Boolean,
 });
