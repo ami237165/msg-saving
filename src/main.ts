@@ -11,6 +11,7 @@ async function bootstrap() {
       },
   });
   await app.listen();
+  
   console.log('📥 Message Microservice running on TCP port 4001');
 
 }

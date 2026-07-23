@@ -13,8 +13,6 @@ export class AppService {
   }
   async saveMsg(msgData: Partial<Message>): Promise<any> {
     return new Promise(async (resolve, reject) => {
-      console.log('hitting service');
-
       try {
         await new this.msgModel({ isNew: true, ...msgData })
           .save()
@@ -25,12 +23,9 @@ export class AppService {
             });
           })
           .catch((error) => {
-            console.log('error :', error);
-
             resolve({ success: false, error: error });
           });
       } catch (error) {
-        console.log('error1 :', error);
         resolve({ success: false, error: error });
       }
     });
@@ -49,19 +44,38 @@ export class AppService {
           .sort({ timestamp: -1 })
           .lean()
           .then((res) => {
-            console.log('results from fetchMsg service', res);
-
             resolve(res);
           })
           .catch((err) => {
-            console.log('error from fetchMsg service', err);
             resolve(err);
           });
       } catch (error) {
-        console.log('exception in fetchMsg service', error);
-
         resolve(error);
       }
     });
+  }
+
+  //updating a msg
+  async update(msdData:Partial<Message>):Promise<any>{
+    const {id,...remaining} = msdData;
+    console.log(remaining);
+    
+    return new Promise(async (resolve,reject) =>{
+      try {
+        await this.msgModel.findOneAndUpdate({id:id},remaining).then((res) =>{
+          console.log("res :",res);
+          
+          resolve({
+            success:true,
+            msgId:res!.id
+          })
+        }).catch((error) =>{
+          resolve({success:false,error:error})
+        })
+        
+      } catch (error) {
+          resolve({success:false,error:error})
+      }
+    })
   }
 }
